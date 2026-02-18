@@ -2121,13 +2121,6 @@ return table.freeze({
 		& ((shape: "Group", transform: CFrame?, shapes: {Shape}?) -> GroupShape)
 		& ((shape: "Mesh", meshPart: MeshPart, transform: CFrame?, size: vector?) -> MeshShape),
 		fromPart = createShape,
-		group = function(shapes: {Shape}, cframe: CFrame?): GroupShape
-			return {
-				ty = "Group",
-				transform = cframe or CFrame.identity,
-				shapes = shapes
-			}
-		end,
 	},
 	shapeInstance = {
 		new = createShapeInstance,
