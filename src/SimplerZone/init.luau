@@ -2072,7 +2072,55 @@ return table.freeze({
 	zshape = require("@self/ZShape"),
 	new = createZone,
 	shape = {
-		new = createShape,
+		new = (function(ty: "Box" | "Cylinder" | "Wedge" | "Sphere" | "Group" | "Mesh", a: any, b: any, c: any): Shape
+			if ty == "Box" then
+				return {
+					ty = "Box",
+					transform = a or CFrame.identity,
+					size = b or vector.zero
+				}
+			elseif ty == "Sphere" then
+				return {
+					ty = "Sphere",
+					center = a or vector.zero,
+					radius = b or 0,
+				}
+			elseif ty == "Cylinder" then
+				return {
+					ty = "Cylinder",
+					center = if a then a.Position else vector.zero,
+					axis = if a then a.XVector.Unit * b else vector.create(b, 0, 0),
+					radius = c or 0,
+					transform = a or CFrame.identity,
+					size = if b then vector.create(b, c + c, c + c) else vector.zero,
+				}
+			elseif ty == "Wedge" then
+				return {
+					ty = "Wedge",
+					transform = a or CFrame.identity,
+					size = b or vector.zero,
+					vertices = Geometry.Vertices.Wedge(b or vector.zero)
+				}
+			elseif ty == "Group" then
+				return {
+					ty = "Group",
+					transform = a or CFrame.identity,
+					shapes = b or {}
+				}
+			elseif ty == "Mesh" then
+				local shape = createMeshShape(a, b or CFrame.identity)
+				shape.size = c or vector.zero
+				return shape
+			end
+			error("exhaustive")
+		end :: any) ::
+		& ((shape: "Box", transform: CFrame?, size: vector?) -> BoxShape)
+		& ((shape: "Sphere", center: vector?, radius: number?) -> SphereShape)
+		& ((shape: "Wedge", transform: CFrame?, size: vector?) -> WedgeShape)
+		& ((shape: "Cylinder", transform: CFrame?, height: number?, radius: number?) -> CylinderShape)
+		& ((shape: "Group", transform: CFrame?, shapes: {Shape}?) -> GroupShape)
+		& ((shape: "Mesh", meshPart: MeshPart, transform: CFrame?, size: vector?) -> MeshShape),
+		fromPart = createShape,
 		group = function(shapes: {Shape}, cframe: CFrame?): GroupShape
 			return {
 				ty = "Group",
@@ -2092,5 +2140,7 @@ return table.freeze({
 	
 	trackGroup = trackGroup,
 	getZonesAtPoint = getZonesAtPoint,
+	
 	visualizeBvh = Geometry.Bvh.visualize,
+	geometry = Geometry
 })
