@@ -56,11 +56,12 @@ export type ShapeInstance = {
 	syncWithPart: (ShapeInstance, part: BasePart) -> Disconnector,
 	syncWithAttachment: (ShapeInstance, attachment: Attachment) -> Disconnector,
 	attach: (ShapeInstance, zone: Zone) -> (),
-	detach: (ShapeInstance) -> (),
+	detach: (ShapeInstance, zone: Zone) -> (),
+	detachAll: (ShapeInstance) -> (),
 	
 	cframe: CFrame,
 	scale: vector,
-	zone: Zone?,
+	zones: {Zone},
 	shape: Shape,
 }
 export type Zone = {
@@ -82,6 +83,7 @@ export type TrackGroup = {
 	addItems: (TrackGroup, items: ZoneItems) -> (),
 	removeItem: (TrackGroup, item: ZoneItem) -> (),
 	removeItems: (TrackGroup, items: ZoneItems) -> (),
+	clear: (TrackGroup) -> (),
 	
 	mutable: ZoneItems,
 	immutable: ZoneItems,

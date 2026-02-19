@@ -385,17 +385,17 @@ function ShapeInstance:syncWithPart(part)
 
 	local function onCFrameChanged()
 		self.cframe = part.CFrame
-		if self.zone then
-			self.zone.bvhDirty = true
-			ZoneScheduler.markZoneDirtyForListeners(self.zone)
+		for _, zone in self.zones do
+			zone.bvhDirty = true
+			ZoneScheduler.markZoneDirtyForListeners(zone)
 		end
 	end
 	
 	local function onSizeChanged()
 		self.scale = getScale(self.shape, part.Size :: any)
-		if self.zone then
-			self.zone.bvhDirty = true
-			ZoneScheduler.markZoneDirtyForListeners(self.zone)
+		for _, zone in self.zones do
+			zone.bvhDirty = true
+			ZoneScheduler.markZoneDirtyForListeners(zone)
 		end
 	end
 
@@ -413,6 +413,10 @@ function ShapeInstance:syncWithAttachment(attachment)
 
 	local cframeChanged = attachment:GetPropertyChangedSignal("WorldCFrame"):Connect(function()
 		self.cframe = attachment.WorldCFrame
+		for _, zone in self.zones do
+			zone.bvhDirty = true
+			ZoneScheduler.markZoneDirtyForListeners(zone)
+		end
 	end)
 
 	return function()
@@ -421,21 +425,29 @@ function ShapeInstance:syncWithAttachment(attachment)
 end
 
 function ShapeInstance:attach(zone)
-	self.zone = zone
+	table.insert(self.zones, zone)
 	table.insert(zone.shapes, self)
 	zone.bvhDirty = true
 end
 
-function ShapeInstance:detach()
-	if self.zone then
-		local shapes = self.zone.shapes
-		local index = table.find(shapes, self)
-		if index then
-			table.remove(shapes, index)
-		end
-		self.zone.bvhDirty = true
-		self.zone = nil
+function ShapeInstance:detach(zone)
+	local shapes = zone.shapes
+	local index = table.find(shapes, self)
+	if index then
+		table.remove(shapes, index)
 	end
+	local index = table.find(self.zones, zone)
+	if index then
+		table.remove(self.zones, index)
+	end
+	zone.bvhDirty = true
+end
+
+function ShapeInstance:detachAll()
+	for _, zone in self.zones do
+		zone.bvhDirty = true
+	end
+	table.clear(self.zones)
 end
 
 function Zone:rebuild()
@@ -1647,7 +1659,7 @@ local function ZoneListener__iter(self: ZoneListener)
 	end
 end
 
-local function createListener(precision: ("BoundingBox" | "Part")?, queryShape: ("Point" | "Box")?, groups: {TrackGroup}?, zones: {Zone}?): ZoneListener
+local function createListener(configs: {precision: ("BoundingBox" | "Part")?, queryShape: ("Point" | "Box")?, groups: {TrackGroup}?, zones: {Zone}?}): ZoneListener
 	local listener: ZoneListener = setmetatable({
 		onEnter = ZoneListener.onEnter,
 		onExit = ZoneListener.onExit,
@@ -1667,8 +1679,8 @@ local function createListener(precision: ("BoundingBox" | "Part")?, queryShape: 
 			models = {},
 			players = {}
 		},
-		precision = (precision or "Part") :: any,
-		queryShape = (queryShape or "Box") :: any,
+		precision = (configs.precision or "Part") :: any,
+		queryShape = (configs.queryShape or "Box") :: any,
 		data = {
 			partsSet = {},
 			attachmentsSet = {},
@@ -1689,11 +1701,11 @@ local function createListener(precision: ("BoundingBox" | "Part")?, queryShape: 
 	}, {
 		__iter = ZoneListener__iter
 	})
-	if groups then
-		listener:setGroups(groups)
+	if configs.groups then
+		listener:setGroups(configs.groups)
 	end
-	if zones then
-		for _, zone in zones do
+	if configs.zones then
+		for _, zone in configs.zones do
 			listener:subscribe(zone)
 		end
 	end
@@ -1745,13 +1757,14 @@ end
 local function createShapeInstance(shape: Shape): ShapeInstance
 	return {
 		shape = shape,
-		zone = nil,
+		zones = {},
 		
 		toParts = ShapeInstance.toParts,
 		syncWithPart = ShapeInstance.syncWithPart,
 		syncWithAttachment = ShapeInstance.syncWithAttachment,
 		attach = ShapeInstance.attach,
 		detach = ShapeInstance.detach,
+		detachAll = ShapeInstance.detachAll,
 
 		cframe = CFrame.identity,
 		scale = vector.one,
@@ -2007,6 +2020,24 @@ function TrackGroup:removeItems(items)
 	end
 end
 
+function TrackGroup:clear()
+	self.mutable = {
+		parts = {},
+		models = {},
+		players = {},
+		attachments = {},
+		pvinstances = {}
+	}
+	self.immutable = {
+		parts = {},
+		models = {},
+		players = {},
+		attachments = {},
+		pvinstances = {}
+	}
+	self:update()
+end
+
 local function trackGroup(items: {parts: {BasePart}?, attachments: {Attachment}?, pvinstances: {PVInstance}?, models: {Model}?, players: {Player}?}): TrackGroup
 	local group = {
 		update = TrackGroup.update,
@@ -2015,6 +2046,7 @@ local function trackGroup(items: {parts: {BasePart}?, attachments: {Attachment}?
 		addItems = TrackGroup.addItems,
 		removeItem = TrackGroup.removeItem,
 		removeItems = TrackGroup.removeItems,
+		clear = TrackGroup.clear,
 
 		mutable = {
 			parts = items.parts or {},
@@ -2065,6 +2097,11 @@ local defaultGroups = {} do
 		Players.PlayerRemoving:Connect(function(player)
 			defaultGroups.players:removeItem({player = player})
 		end)
+	end
+	defaultGroups.localPlayer = trackGroup({}) do
+		if RunService:IsClient() then
+			defaultGroups.localPlayer:addItem(Players.LocalPlayer)
+		end
 	end
 end
 
