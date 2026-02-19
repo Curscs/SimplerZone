@@ -2085,6 +2085,11 @@ local defaultGroups = {} do
 			defaultGroups.players:removeItem({player = player})
 		end)
 	end
+	defaultGroups.localPlayer = trackGroup({}) do
+		if RunService:IsClient() then
+			defaultGroups.localPlayer:addItem(Players.LocalPlayer)
+		end
+	end
 end
 
 return table.freeze({
