@@ -56,11 +56,12 @@ export type ShapeInstance = {
 	syncWithPart: (ShapeInstance, part: BasePart) -> Disconnector,
 	syncWithAttachment: (ShapeInstance, attachment: Attachment) -> Disconnector,
 	attach: (ShapeInstance, zone: Zone) -> (),
-	detach: (ShapeInstance) -> (),
+	detach: (ShapeInstance, zone: Zone) -> (),
+	detachAll: (ShapeInstance) -> (),
 	
 	cframe: CFrame,
 	scale: vector,
-	zone: Zone?,
+	zones: {Zone},
 	shape: Shape,
 }
 export type Zone = {

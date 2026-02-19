@@ -385,17 +385,17 @@ function ShapeInstance:syncWithPart(part)
 
 	local function onCFrameChanged()
 		self.cframe = part.CFrame
-		if self.zone then
-			self.zone.bvhDirty = true
-			ZoneScheduler.markZoneDirtyForListeners(self.zone)
+		for _, zone in self.zones do
+			zone.bvhDirty = true
+			ZoneScheduler.markZoneDirtyForListeners(zone)
 		end
 	end
 	
 	local function onSizeChanged()
 		self.scale = getScale(self.shape, part.Size :: any)
-		if self.zone then
-			self.zone.bvhDirty = true
-			ZoneScheduler.markZoneDirtyForListeners(self.zone)
+		for _, zone in self.zones do
+			zone.bvhDirty = true
+			ZoneScheduler.markZoneDirtyForListeners(zone)
 		end
 	end
 
@@ -421,21 +421,29 @@ function ShapeInstance:syncWithAttachment(attachment)
 end
 
 function ShapeInstance:attach(zone)
-	self.zone = zone
+	table.insert(self.zones, zone)
 	table.insert(zone.shapes, self)
 	zone.bvhDirty = true
 end
 
-function ShapeInstance:detach()
-	if self.zone then
-		local shapes = self.zone.shapes
-		local index = table.find(shapes, self)
-		if index then
-			table.remove(shapes, index)
-		end
-		self.zone.bvhDirty = true
-		self.zone = nil
+function ShapeInstance:detach(zone)
+	local shapes = zone.shapes
+	local index = table.find(shapes, self)
+	if index then
+		table.remove(shapes, index)
 	end
+	local index = table.find(self.zones, zone)
+	if index then
+		table.remove(self.zones, index)
+	end
+	zone.bvhDirty = true
+end
+
+function ShapeInstance:detachAll()
+	for _, zone in self.zones do
+		zone.bvhDirty = true
+	end
+	table.clear(self.zones)
 end
 
 function Zone:rebuild()
@@ -1745,13 +1753,14 @@ end
 local function createShapeInstance(shape: Shape): ShapeInstance
 	return {
 		shape = shape,
-		zone = nil,
+		zones = {},
 		
 		toParts = ShapeInstance.toParts,
 		syncWithPart = ShapeInstance.syncWithPart,
 		syncWithAttachment = ShapeInstance.syncWithAttachment,
 		attach = ShapeInstance.attach,
 		detach = ShapeInstance.detach,
+		detachAll = ShapeInstance.detachAll,
 
 		cframe = CFrame.identity,
 		scale = vector.one,
