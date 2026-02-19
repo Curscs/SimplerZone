@@ -1,0 +1,9 @@
+[book]
+authors = ["athar_adv"]
+language = "en"
+src = "docs_md"
+title = "simpler-zone"
+
+[build]
+
+build-dir = "docs"
