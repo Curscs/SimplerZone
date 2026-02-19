@@ -213,7 +213,10 @@
 <p>Connects <code>fn</code> to be called when any <code>ZoneItem</code> enters the geometric boundaries of any subscribed <code>Zone</code></p>
 <h3 id="zonelisteneronexitfn-item-zoneitem------disconnector"><a class="header" href="#zonelisteneronexitfn-item-zoneitem------disconnector">ZoneListener:onExit(fn: (item: ZoneItem) -&gt; ()) -&gt; Disconnector</a></h3>
 <p>Connects <code>fn</code> to be called when any <code>ZoneItem</code> exits the geometric boundaries of any subscribed <code>Zone</code></p>
+<h3 id="zonelistenerobservefn-item-zoneitem---------disconnector"><a class="header" href="#zonelistenerobservefn-item-zoneitem---------disconnector">ZoneListener:observe(fn: (item: ZoneItem) -&gt; (() -&gt; ())?) -&gt; Disconnector</a></h3>
+<p>Connects <code>fn</code> to be called when any <code>ZoneItem</code> enters the geometric boundaries of any subscribed <code>Zone</code>, and for the returned function (if any) to be called when it exits it.</p>
 <h3 id="zonelistenersetgroupsgroups-trackgroup---"><a class="header" href="#zonelistenersetgroupsgroups-trackgroup---">ZoneListener:setGroups(groups: {TrackGroup}) -&gt; ()</a></h3>
+<p>Sets the <code>TrackGroup</code>s that this <code>ZoneListener</code> should be listening for.</p>
 
                     </main>
 

@@ -51,5 +51,10 @@ Connects `fn` to be called when any `ZoneItem` enters the geometric boundaries o
 
 Connects `fn` to be called when any `ZoneItem` exits the geometric boundaries of any subscribed `Zone`
 
+### ZoneListener:observe(fn: (item: ZoneItem) -> (() -> ())?) -> Disconnector
+
+Connects `fn` to be called when any `ZoneItem` enters the geometric boundaries of any subscribed `Zone`, and for the returned function (if any) to be called when it exits it. 
+
 ### ZoneListener:setGroups(groups: {TrackGroup}) -> ()
 
+Sets the `TrackGroup`s that this `ZoneListener` should be listening for.
