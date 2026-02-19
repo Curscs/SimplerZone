@@ -1647,7 +1647,7 @@ local function ZoneListener__iter(self: ZoneListener)
 	end
 end
 
-local function createListener(precision: ("BoundingBox" | "Part")?, queryShape: ("Point" | "Box")?, groups: {TrackGroup}?, zones: {Zone}?): ZoneListener
+local function createListener(configs: {precision: ("BoundingBox" | "Part")?, queryShape: ("Point" | "Box")?, groups: {TrackGroup}?, zones: {Zone}?}): ZoneListener
 	local listener: ZoneListener = setmetatable({
 		onEnter = ZoneListener.onEnter,
 		onExit = ZoneListener.onExit,
@@ -1667,8 +1667,8 @@ local function createListener(precision: ("BoundingBox" | "Part")?, queryShape: 
 			models = {},
 			players = {}
 		},
-		precision = (precision or "Part") :: any,
-		queryShape = (queryShape or "Box") :: any,
+		precision = (configs.precision or "Part") :: any,
+		queryShape = (configs.queryShape or "Box") :: any,
 		data = {
 			partsSet = {},
 			attachmentsSet = {},
@@ -1689,11 +1689,11 @@ local function createListener(precision: ("BoundingBox" | "Part")?, queryShape: 
 	}, {
 		__iter = ZoneListener__iter
 	})
-	if groups then
-		listener:setGroups(groups)
+	if configs.groups then
+		listener:setGroups(configs.groups)
 	end
-	if zones then
-		for _, zone in zones do
+	if configs.zones then
+		for _, zone in configs.zones do
 			listener:subscribe(zone)
 		end
 	end
@@ -2007,6 +2007,24 @@ function TrackGroup:removeItems(items)
 	end
 end
 
+function TrackGroup:clear()
+	self.mutable = {
+		parts = {},
+		models = {},
+		players = {},
+		attachments = {},
+		pvinstances = {}
+	}
+	self.immutable = {
+		parts = {},
+		models = {},
+		players = {},
+		attachments = {},
+		pvinstances = {}
+	}
+	self:update()
+end
+
 local function trackGroup(items: {parts: {BasePart}?, attachments: {Attachment}?, pvinstances: {PVInstance}?, models: {Model}?, players: {Player}?}): TrackGroup
 	local group = {
 		update = TrackGroup.update,
@@ -2015,6 +2033,7 @@ local function trackGroup(items: {parts: {BasePart}?, attachments: {Attachment}?
 		addItems = TrackGroup.addItems,
 		removeItem = TrackGroup.removeItem,
 		removeItems = TrackGroup.removeItems,
+		clear = TrackGroup.clear,
 
 		mutable = {
 			parts = items.parts or {},

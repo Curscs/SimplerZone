@@ -82,6 +82,7 @@ export type TrackGroup = {
 	addItems: (TrackGroup, items: ZoneItems) -> (),
 	removeItem: (TrackGroup, item: ZoneItem) -> (),
 	removeItems: (TrackGroup, items: ZoneItems) -> (),
+	clear: (TrackGroup) -> (),
 	
 	mutable: ZoneItems,
 	immutable: ZoneItems,
