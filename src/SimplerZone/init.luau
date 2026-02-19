@@ -413,6 +413,10 @@ function ShapeInstance:syncWithAttachment(attachment)
 
 	local cframeChanged = attachment:GetPropertyChangedSignal("WorldCFrame"):Connect(function()
 		self.cframe = attachment.WorldCFrame
+		for _, zone in self.zones do
+			zone.bvhDirty = true
+			ZoneScheduler.markZoneDirtyForListeners(zone)
+		end
 	end)
 
 	return function()
